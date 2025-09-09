@@ -18,5 +18,7 @@ namespace TaskManagementAPI.Models
         [ForeignKey("Role")]
         public int RoleId { get; set; }
         public Role Role { get; set; }
+
+        public ICollection<TaskItem> TaskList { get; set; }
     }
 }

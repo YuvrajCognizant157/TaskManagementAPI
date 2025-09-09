@@ -11,5 +11,20 @@ namespace TaskManagementAPI.Context
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.User)
+                .WithMany(u => u.TaskList)
+                .HasForeignKey(u => u.UserId);
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Role)
+                .WithMany(r => r.Users)
+                .HasForeignKey(u => u.RoleId);
+        }
+
     }
 }
