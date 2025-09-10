@@ -1,5 +1,10 @@
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.Metrics;
+using System.Text;
 using TaskManagementAPI.Context;
 
 namespace TaskManagementAPI
@@ -10,6 +15,17 @@ namespace TaskManagementAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowLocalhost",
+                    builder => builder
+                        .AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                //.WithOrigins(["",""])
+                );
+            });
+
             // Add DbContext configuration USING DbContextOptions
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -19,6 +35,57 @@ namespace TaskManagementAPI
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            //extract the secret string
+            var JwtKey = builder.Configuration.GetValue<string>("Jwt:Secret");
+
+
+            //this sets up the authentication service for your application
+            _ = builder.Services.AddAuthentication(x =>
+            {
+                /*tells the app which scheme to use when authenticating incoming requests.
+                Here, it's set to JWT Bearer meaning it will look for a JWT in the request's Authorization header
+                */
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+
+                /*specifies the scheme to use when a user is unauthenticated or authorized.
+                it returns a 401 unauthorized  response, and the JWT bearer scheme handles that process
+                */
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+                /*this is where you configure the specfic behavior of the JWT Bearer authentication handler.*/
+                .AddJwtBearer(x =>
+                {
+                    /*set to true to ensure HTTPS connection(false to avoid certificate issues)*/
+                    x.RequireHttpsMetadata = true;
+                    /*saves the incoming token in the HttpContext after it has been validated.This allows you to access the token later in your app logic
+                      */
+                    x.SaveToken = true;
+
+                    //object containing the rules for validating the token
+                    var jwtValidAudiences = builder.Configuration.GetSection("Jwt:Audience").GetChildren()
+                                             .Select(a => a.Value)
+                                             .ToList();
+                    ;
+                    x.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        //ensures that token was signed with the correct secret key.Without this,anyone could forge a token
+                        ValidateIssuerSigningKey = true,
+
+                        //this is where you pass the secret key. the code gets the key from your app's config and converts it into a symmetricsecuritykey object. the token's signature will be verified against this key
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(JwtKey)),
+
+                        //the issuer is the entity that created the token,provides the exprected issuer's name to add another layer of security
+                        ValidateIssuer = true,
+                        /*
+                         * intended recipient of the token,settings it to false means the application won't check who the token is for.
+                         */
+                        ValidateAudience = true,
+                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                        ValidAudiences = jwtValidAudiences,
+                    };
+                });
+
+           
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -29,7 +96,7 @@ namespace TaskManagementAPI
             }
 
             app.UseHttpsRedirection();
-
+            app.UseAuthentication();
             app.UseAuthorization();
 
 

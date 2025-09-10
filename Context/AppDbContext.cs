@@ -24,6 +24,13 @@ namespace TaskManagementAPI.Context
                 .HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId);
+
+            modelBuilder.Entity<Role>().HasData(
+                new Role { RoleId = 1, Name = "Admin" },
+                new Role { RoleId = 2, Name = "Manager" },
+                new Role { RoleId = 3, Name = "Employee" }
+            );
+
         }
 
     }

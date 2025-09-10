@@ -10,6 +10,9 @@ namespace TaskManagementAPI.Models
 
         public string Name { get; set; }
 
+        [DataType(DataType.Password)]
+        public string password { get; set; }
+
         public string Address { get; set; }
 
         [DataType(DataType.Date)]
