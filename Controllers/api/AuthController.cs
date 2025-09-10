@@ -2,18 +2,20 @@
 using TaskManagementAPI.DTOs;
 using TaskManagementAPI.Models;
 using TaskManagementAPI.Repositories;
+using TaskManagementAPI.Services;
 
 namespace TaskManagementAPI.Controllers.api
 {
     public class AuthController : Controller
     {
         private readonly userRepository userRepo;
+
         public IActionResult Index()
         {
             return View();
         }
 
-        [HttpPost("")]
+        [HttpPost("login")]
         public IActionResult Login([FromForm] LoginDTO logindto)
         {
             //take information in form (name,password)
@@ -27,14 +29,14 @@ namespace TaskManagementAPI.Controllers.api
             User loggedinUser = userRepo.GetUserByName(logindto.name, logindto.password);
 
             if (loggedinUser == null)
-                { return Unauthorized("Invalid credentials"); }
+            {
+                return Unauthorized("Invalid credentials");
+            }
 
             //jwt token creation
+            string token = TokenService.GenerateJwtToken(loggedinUser);
 
-
-            return View();
-            }
-               
+            return Ok(new { Token = token });
         }
     }
 }

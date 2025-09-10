@@ -1,4 +1,9 @@
-﻿using TaskManagementAPI.Context;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using TaskManagementAPI.Context;
 using TaskManagementAPI.Models;
 
 namespace TaskManagementAPI.Repositories
@@ -12,9 +17,13 @@ namespace TaskManagementAPI.Repositories
             _appContext = appDbContext;
         }
 
+        
+
         public User GetUserByName(string name,string password)
         {
             return _appContext.Users.FirstOrDefault(u => u.Name == name && u.password ==password);
         }
+       
+
     }
 }
