@@ -2,10 +2,13 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.Metrics;
 using System.Text;
 using TaskManagementAPI.Context;
+using TaskManagementAPI.Repositories;
+using TaskManagementAPI.Services;
 
 namespace TaskManagementAPI
 {
@@ -31,9 +34,44 @@ namespace TaskManagementAPI
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddControllers();
+            builder.Services.AddScoped<TokenService>();
+            builder.Services.AddScoped<IUserRepository, userRepository>();
+            builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "TaskManagementAPI", Version = "v1" });
+
+                // Add JWT Authentication
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Enter 'Bearer' followed by your JWT token"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] {}
+                    }
+                });
+            });
+
 
             //extract the secret string
             var JwtKey = builder.Configuration.GetValue<string>("Jwt:Secret");
@@ -60,12 +98,6 @@ namespace TaskManagementAPI
                     /*saves the incoming token in the HttpContext after it has been validated.This allows you to access the token later in your app logic
                       */
                     x.SaveToken = true;
-
-                    //object containing the rules for validating the token
-                    var jwtValidAudiences = builder.Configuration.GetSection("Jwt:Audience").GetChildren()
-                                             .Select(a => a.Value)
-                                             .ToList();
-                    ;
                     x.TokenValidationParameters = new TokenValidationParameters
                     {
                         //ensures that token was signed with the correct secret key.Without this,anyone could forge a token
@@ -76,16 +108,26 @@ namespace TaskManagementAPI
 
                         //the issuer is the entity that created the token,provides the exprected issuer's name to add another layer of security
                         ValidateIssuer = true,
-                        /*
-                         * intended recipient of the token,settings it to false means the application won't check who the token is for.
-                         */
-                        ValidateAudience = true,
+
                         ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                        ValidAudiences = jwtValidAudiences,
+                        /* intended recipient of the token,settings it to false means the application won't check who the token is for.
+                        */
+                        ValidateAudience = true,
+                        ValidAudience = builder.Configuration["Jwt:Audience"],
+
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.Zero
+
                     };
                 });
 
-           
+
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("EmployeeOnly", policy => policy.RequireRole("Employee"));
+            });
+
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

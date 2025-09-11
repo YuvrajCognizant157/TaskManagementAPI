@@ -4,16 +4,25 @@ using TaskManagementAPI.Models;
 using TaskManagementAPI.Repositories;
 using TaskManagementAPI.Services;
 
-namespace TaskManagementAPI.Controllers.api
+namespace TaskManagementAPI.Controllers
 {
     public class AuthController : Controller
     {
-        private readonly userRepository userRepo;
+        private readonly IUserRepository userRepo;
+        private readonly TokenService _tokenService;
+
+        public AuthController(TokenService tokenService, IUserRepository userRepository)
+        {
+            _tokenService = tokenService;
+            userRepo = userRepository;
+        }
+
 
         public IActionResult Index()
         {
             return View();
         }
+
 
         [HttpPost("login")]
         public IActionResult Login([FromForm] LoginDTO logindto)
@@ -34,9 +43,24 @@ namespace TaskManagementAPI.Controllers.api
             }
 
             //jwt token creation
-            string token = TokenService.GenerateJwtToken(loggedinUser);
+            string token = _tokenService.GenerateJwtToken(loggedinUser);
 
             return Ok(new { Token = token });
+        }
+
+        [HttpPost("register")]
+        public IActionResult Register([FromForm] RegisterDTO registerdto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest("Incomplete input");
+
+            int status = userRepo.AddUser(registerdto);
+            if (status == 0)
+            {
+                return StatusCode(500);
+            }
+
+            return Ok("User added!!!Hurray");
         }
     }
 }

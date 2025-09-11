@@ -13,11 +13,11 @@ namespace TaskManagementAPI.Services
     {
         private readonly IConfiguration _configuration;
 
-        public TokenService( IConfiguration configuration)
+        public TokenService(IConfiguration configuration)
         {
             _configuration = configuration;
         }
-        internal static string GenerateJwtToken(User user)
+        internal string GenerateJwtToken(User user)
         {
             /*
              * 1. Symmetric key creation

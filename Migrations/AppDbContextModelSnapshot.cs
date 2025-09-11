@@ -37,6 +37,23 @@ namespace TaskManagementAPI.Migrations
                     b.HasKey("RoleId");
 
                     b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            RoleId = 1,
+                            Name = "Admin"
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            Name = "Manager"
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            Name = "Employee"
+                        });
                 });
 
             modelBuilder.Entity("TaskManagementAPI.Models.TaskItem", b =>
@@ -91,6 +108,10 @@ namespace TaskManagementAPI.Migrations
 
                     b.Property<int>("RoleId")
                         .HasColumnType("int");
+
+                    b.Property<string>("password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("UserId");
 
