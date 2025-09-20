@@ -5,6 +5,6 @@ namespace TaskManagementAPI.Repositories
 {
     public interface ITaskRepository
     {
-        public List<TaskItem> GetTaskItemsOfUser(string UserName);
+        public List<TaskItem> GetTaskItemsOfUser(int UserId);
     }
 }

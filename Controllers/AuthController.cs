@@ -18,12 +18,6 @@ namespace TaskManagementAPI.Controllers
         }
 
 
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-
         [HttpPost("login")]
         public IActionResult Login([FromForm] LoginDTO logindto)
         {

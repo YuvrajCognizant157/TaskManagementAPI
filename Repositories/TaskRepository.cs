@@ -12,9 +12,9 @@ namespace TaskManagementAPI.Repositories
         {
             _context = context;
         }
-        public List<TaskItem> GetTaskItemsOfUser(string UserName)
+        public List<TaskItem> GetTaskItemsOfUser(int UserId)
         {
-            return (List<TaskItem>)_context.Users.FirstOrDefault(u => u.Name == UserName).TaskList;
+            return (List<TaskItem>)_context.TaskItems.Where(t => t.UserId == UserId).ToList();
         }
     }
 }

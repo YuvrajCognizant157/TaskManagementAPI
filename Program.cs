@@ -125,6 +125,7 @@ namespace TaskManagementAPI
             builder.Services.AddAuthorization(options =>
             {
                 options.AddPolicy("EmployeeOnly", policy => policy.RequireRole("Employee"));
+                options.AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager"));
             });
 
 
@@ -143,6 +144,16 @@ namespace TaskManagementAPI
 
 
             app.MapControllers();
+
+            app.Use(async (context, next) =>
+            {
+                var list = context.User.Claims.ToList();
+                foreach (var l in list)
+                {
+                    Console.WriteLine("Claim Values: " + l.Value + " " + l.Issuer);
+                }
+                await next();
+            });
 
             app.Run();
         }

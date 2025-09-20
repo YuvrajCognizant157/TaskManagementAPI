@@ -22,10 +22,11 @@ namespace TaskManagementAPI.Controllers
 
         [Authorize(Roles = "Employee")]
         [HttpPost("/get-taskitem")]
-        public IActionResult GetTaskItem([FromBody] string UserName)
+        public IActionResult GetTaskItem([FromQuery] int UserId)
         {
-            var items = taskRepo.GetTaskItemsOfUser(UserName);
-            return Ok(new Dictionary<string, object>
+            var items = taskRepo.GetTaskItemsOfUser(UserId);
+            if (items == null) return Ok("No items");
+            else return Ok(new Dictionary<string, object>
             {
                 { "TaskItems", items },
                 { "Count", items.Count }
